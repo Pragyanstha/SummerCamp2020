@@ -1,2 +1,6 @@
+
 src/labeling_cc/__pycache__/*
 *.npy
+/Part*
+/Problem*
+/SourcePointClouds
