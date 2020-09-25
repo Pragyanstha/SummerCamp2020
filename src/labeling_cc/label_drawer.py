@@ -18,10 +18,13 @@ mouse_x_ = 0
 mouse_y_ = 0
 scale_ = 0.002
 
+select_id_ = 2
 target_ = Quaternion()
 current_ = Quaternion()
 rotate_ = [[1.0,0.0,0.0,0.0],[0.0,1.0,0.0,0.0],[0.0,0.0,1.0,0.0],[0.0,0.0,0.0,1.0]]
 
+char_voxel = []
+labels = []
 vcs = []
 vtx = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 vl = 3
@@ -85,10 +88,18 @@ def idle():
 def keyBoard(key, x, y):
     print(key)
     global scale_
+    global select_id_
     if key == b'a':
         scale_ *= 1.1
     if key == b's':
         scale_ *= 0.9
+    if key == b'z':
+        select_id_ -= 1
+        set_voxels()
+    if key == b'x':
+        select_id_ += 1
+        set_voxels()
+
 def mouseMove(x, y):
     dx = (x - mouse_x_) * 3.14 / width_
     dy = (y - mouse_y_) * 3.14 / height_
@@ -126,19 +137,19 @@ def set_voxel_test():
     vl=10
     vtx = np.random.rand(3, 10)
 
-def set_voxels(bool_voxel, char_voxel):
+def set_voxels():
+    print("select voxel {}".format(select_id_))
     print("voxel data loading...")
     global vtx
     global vcs
     global vl
-    voxel_size = bool_voxel.shape
-    edges = np.array(np.nonzero(bool_voxel))
-    edges_sparce = edges.transpose()
-    vl = edges_sparce.shape[0]
-    vtx = edges_sparce.astype(np.float32)
+    voxel_size = labels.shape
+    target = np.array(np.nonzero(labels == select_id_)).transpose()
+    vl = target.shape[0]
+    vtx = target.astype(np.float32)
     vcs = np.zeros((vl, 3), np.float32)
 
-    normals = get_normals(char_voxel, edges_sparce)
+    normals = get_normals(char_voxel, target)
     print(normals)
     vcs = normals*0.5+0.5
     #for i in range(vl):
@@ -146,9 +157,10 @@ def set_voxels(bool_voxel, char_voxel):
     print("voxel load finished. length: {}".format(vl))
 
 if __name__ == "__main__":
-    voxel = create_downsampled_voxel_sample()
-    voxel_bool = create_bool_voxel(voxel)
-    set_voxels(voxel_bool, voxel)
-    labeling(voxel, voxel_bool)
-    #set_voxel_test()
+    char_voxel = create_downsampled_voxel_sample()
+    #bool_boxel = create_bool_voxel_d2(char_voxel)
+    #labels = labeling(char_voxel, bool_boxel)
+    bool_voxel = create_th_voxel(char_voxel)
+    labels = labeling_bool(bool_voxel)
+    set_voxels()
     main()
