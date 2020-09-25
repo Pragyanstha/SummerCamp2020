@@ -159,10 +159,11 @@ def set_voxels():
 
 if __name__ == "__main__":
     char_voxel = create_downsampled_voxel_sample()
-    #bool_boxel = create_bool_voxel_d2(char_voxel)
+    bool_voxel = create_bool_voxel_d2(char_voxel)
     #labels = labeling(char_voxel, bool_boxel)
-    bool_voxel = create_th_voxel(char_voxel)
-    labels = labeling_bool(bool_voxel)
+    th_bool_voxel = create_th_voxel(char_voxel)
+    th_bool_voxel = th_bool_voxel * (bool_voxel==False)
+    labels = labeling_bool(th_bool_voxel)
     select_id_ = np.max(labels)
     set_voxels()
     main()

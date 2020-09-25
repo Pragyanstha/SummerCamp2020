@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import random
 
-from labeling_cc.union_find import UnionFind
+from union_find import UnionFind
 
 def create_bool_voxel(char_voxel):
 
@@ -106,11 +106,11 @@ def labeling(char_voxel, bool_voxel):
     idx = np.zeros(char_voxel.shape, dtype=np.int32)
     labels = np.full(char_voxel.shape, -1, dtype=np.int32)
     target_length = targets.shape[0]
-    uf = UnionFind(target_length)
+    uf = UnionFind(target_length+1)
     # connection kernel(3x3)
-    p0 = [1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0]
-    p1 = [-1,-1,-1,0,0,0,1,1,1,-1,-1,-1,0,0,0,1,1,1]
-    p2 = [-1,0,1,-1,0,1,-1,0,1,-1,0,1,-1,0,1,-1,0,1]
+    p0 = [-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0]
+    p1 = [-1,-1,-1,0,0,0,1,1,1,-1,-1,-1,0]
+    p2 = [-1,0,1,-1,0,1,-1,0,1,-1,0,1,-1]
     # connection kernel(2x2)
     q1 = [-1,-1,-1,0,0]
     q2 = [-1,0, 1,-1,0]
@@ -121,13 +121,13 @@ def labeling(char_voxel, bool_voxel):
     vnm[nonzero] = normals
     #search area size
     ss = [char_voxel.shape[0]-2, char_voxel.shape[1]-2, char_voxel.shape[2]-2]
-    for i in range(12):
+    for i in range(13):
         print("step:{}".format(i))
         v1 = idx[1:1+ss[0], 1:1+ss[1], 1:1+ss[2]]
         v2 = idx[1+p0[i]:1+p0[i]+ss[0], 1+p1[i]:1+p1[i]+ss[1], 1+p2[i]:1+p2[i]+ss[2]]
         do = np.sum(vnm[1:1+ss[0], 1:1+ss[1], 1:1+ss[2]] * vnm[1+p0[i]:1+p0[i]+ss[0], 1+p1[i]:1+p1[i]+ss[1], 1+p2[i]:1+p2[i]+ss[2]], 3)
-        v3 = (do > 0.3)
-        con = np.nonzero(v1*v2*v3)
+        v3 = (do > 0.5)
+        con = np.nonzero((v1!=0)&(v2!=0)&v3)
         conp = np.array(con)+1
         id1s = idx[tuple(conp.tolist())].tolist()
         conq = np.array(con)
@@ -135,16 +135,16 @@ def labeling(char_voxel, bool_voxel):
         conq[1,:]+=p1[i]+1
         conq[2,:]+=p2[i]+1
         id2s = idx[tuple(conq.tolist())].tolist()
+
         ids = zip(id1s, id2s)
-        cl = conp.shape[1]
-        print(cl)
+        print("connections: {}".format(conp.shape[1]))
         for id1, id2 in ids:
             if id1<=0 or id2 <= 0 or id1 >= target_length-1 or id2 >= target_length-1:
                 print(id1,id2)
                 continue
             uf.union(id1,id2)
     # labels lookup table
-    lut = np.zeros(target_length, dtype=np.int32)
+    lut = np.zeros(target_length+1, dtype=np.int32)
     lbl_max = 1
     for i in range(target_length):
         fi = uf.find(i)
@@ -154,7 +154,7 @@ def labeling(char_voxel, bool_voxel):
     print(np.nonzero(lut))
     print("label count: {}".format(lbl_max))
     for i in range(target_length):
-        fi = uf.find(i)
+        fi = uf.find(i+1)
         if lut[fi]!=0:
             labels[targets[i,0], targets[i,1], targets[i,2]] = lut[fi]
     return labels
@@ -166,8 +166,8 @@ def labeling_bool(voxel):
     kernel = np.ones((5,5),np.uint8)
     for i in range(voxel.shape[0]):
         label_count_start[i] = label_count
-        erosion1 = cv2.erode(voxel[i,:,:].astype(np.uint8),kernel,iterations = 1)
-        current_label_count, layer_label = cv2.connectedComponents(erosion1)
+        opening = cv2.morphologyEx(voxel[i,:,:].astype(np.uint8), cv2.MORPH_OPEN, kernel)
+        current_label_count, layer_label = cv2.connectedComponents(opening)
         lb = layer_label.astype(np.int32)
         lb[lb<0]=0
         lb[np.nonzero(lb)] += label_count
@@ -207,6 +207,6 @@ def labeling_bool(voxel):
     print("finish labeling")
     return labels
 # wrapper for code joint
-def labeling_module(char_voxel, bool_voxel):
+def labeling_module(char_voxel, edge_voxel, bool_voxel):
     labeling_bool(bool_voxel)
     #labeling(char_voxel, bool_voxel)

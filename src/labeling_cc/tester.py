@@ -35,4 +35,4 @@ def create_downsampled_voxel_sample():
     return voxel
 
 def create_th_voxel(char_voxel):
-    return(char_voxel > 70).astype(np.bool)
+    return(char_voxel > 68).astype(np.bool)
