@@ -6,6 +6,7 @@ src/labeling_cc/__pycache__/*
 /SourcePointClouds
 /Canny
 /Test
-
+/DenseParts
+/cache
 
 *.jpg

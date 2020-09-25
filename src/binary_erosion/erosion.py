@@ -1,27 +1,7 @@
 import numpy as np
+import cv2
 
-def erode(src, ksize=3):
-    h, w = src.shape
-    dst = src.copy()
-    d = int(1)
-
-    for y in range(0, h):
-        for x in range(0, w):
-            roi = src[y-d:y+d+1, x-d:x+d+1]
-            if roi.size - np.count_nonzero(roi)>0:
-                dst[y][x] = 0
-
-    return dst
-
-def erode2(src, ksize=3):
-    h, w = src.shape
-    dst = src.copy()
-    d = int(1)
-
-    for y in range(0, h):
-        for x in range(0, w):
-            roi = src[y, x-d:x+d+1]
-            if roi.size - np.count_nonzero(roi)>0:
-                dst[y][x] = 0
-
+def erode(src, ksize, it):
+    kernel = np.ones((ksize, ksize), np.uint8) 
+    dst = cv2.erode(src.astype(np.uint8),kernel, iterations=it)
     return dst

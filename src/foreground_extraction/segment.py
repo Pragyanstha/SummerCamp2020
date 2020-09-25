@@ -16,7 +16,7 @@ def segment2(voxel):
     vectorized=np.float32(vectorized)
     criteria=(cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER,10, 1.0)
     ret,label,center=cv2.kmeans(vectorized,3,None,criteria,10,cv2.KMEANS_PP_CENTERS)
-    print("Cluster centers : ")
-    print(center)    
-    return label.reshape(voxel.shape)
+    #print("Cluster centers : ")
+    #print(center)    
+    return label.reshape(voxel.shape), center
     
