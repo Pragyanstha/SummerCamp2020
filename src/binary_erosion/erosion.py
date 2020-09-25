@@ -25,14 +25,3 @@ def erode2(src, ksize=3):
                 dst[y][x] = 0
 
     return dst
-
-
-input=np.array()
-
-for num in range(input.shape[0]):
-    print(num)
-    test[num,:,:]=erode(input[num,:,:],3)
-
-for num in range(input.shape[1]):
-    print(num)
-    input[:,num,:]=erode2(input[:,num,:],3)

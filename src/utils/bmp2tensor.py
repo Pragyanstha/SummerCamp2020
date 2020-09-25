@@ -6,10 +6,10 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 
-def bmp2tensor(problem_num, size):
+def bmp2tensor(problem_str, size):
     p = Path('./')
-    problem_str = 'Problem{num:02d}'
-    fname = p.joinpath(problem_str.format(num = problem_num))
+    
+    fname = p.joinpath(problem_str)
 
     voxel = np.zeros(size)
     count = 0
@@ -26,7 +26,7 @@ def bmp2tensor(problem_num, size):
             im = Image.open(item.absolute())
             im = im.resize((size[0], size[1]),Image.ANTIALIAS).convert('L')
             im2arr = np.array(im)
-            voxel[:,:,idx] = im2arr
+            voxel[idx,:,:] = im2arr
             idx = idx + 1
 
         count = count + 1
@@ -36,8 +36,8 @@ def bmp2tensor(problem_num, size):
 
 if __name__ == '__main__':
     # Example
-    # Arguments : Problen number, size
+    # Arguments : Folder name, size
     # size being an array of 3 numbers, row, col, height of voxel
     # Return : ndarray with the specified size
 
-    print(bmp2tensor(1, [100,100,100]))
+    print(bmp2tensor('Problem01', [100,100,100]))
