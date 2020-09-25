@@ -2,7 +2,6 @@
 import numpy as np
 import cv2
 import random
-
 from union_find import UnionFind
 
 def create_bool_voxel(char_voxel):
@@ -34,21 +33,20 @@ def create_bool_voxel_d2(char_voxel):
     #    return voxel
     voxel_xy = np.zeros(char_voxel.shape, dtype=bool)
     voxel_xz = np.zeros(char_voxel.shape, dtype=bool)
+    voxel_yz = np.zeros(char_voxel.shape, dtype=bool)
     for i in range(1,char_voxel.shape[0]):
-        #filename = "../../../summercamp_data/Problem01/Problem01_{:04}.bmp".format(i)
-        if i % 10 == 0:
-            print(i)
         img = char_voxel[i,:,:]#cv2.imread(filename)
-        edge = cv2.Canny(img,3,12)
+        edge = cv2.Canny(img,2,10)
         voxel_xy[i,:,:] = (edge != 0)
     for i in range(1,char_voxel.shape[1]):
-        #filename = "../../../summercamp_data/Problem01/Problem01_{:04}.bmp".format(i)
-        if i % 10 == 0:
-            print(i)
         img = char_voxel[:,i,:]#cv2.imread(filename)
-        edge = cv2.Canny(img,3,12)
+        edge = cv2.Canny(img,2,10)
         voxel_xz[:,i,:] = (edge != 0)
-    voxel = voxel_xy | voxel_xz
+    for i in range(1,char_voxel.shape[2]):
+        img = char_voxel[:,:,i]#cv2.imread(filename)
+        edge = cv2.Canny(img,2,10)
+        voxel_yz[:,:,i] = (edge != 0)
+    voxel = voxel_xy | voxel_xz| voxel_yz
     voxel[0,:,:]=False
     voxel[:,0,:]=False
     voxel[:,:,0]=False
@@ -57,6 +55,64 @@ def create_bool_voxel_d2(char_voxel):
     voxel[:,:,char_voxel.shape[2]-1]=False
     np.save("boolean_voxel_sample", voxel)
     return voxel
+
+# input: voxel which has label data(int32)
+def get_label_dist_voxel(label_voxel, iteration=5):
+    label_max = np.max(label_voxel)
+    iv = np.zeros((label_max,label_voxel.shape[0],label_voxel.shape[1],label_voxel.shape[2]), np.int32)
+    for i in range(label_max):
+        print("loading voxel labels:", i)
+        iv[i,:,:,:] = (label_voxel==i)
+        nonzero = np.array(np.nonzero(iv[i,:,:,:]))
+        area_min = np.min(nonzero, axis=1) - iteration
+        area_max = np.max(nonzero, axis=1) + iteration
+        if area_min[0] < iteration or area_min[1] < iteration or area_min[2] < iteration:
+            continue
+        if area_max[0] >= label_voxel.shape[0]-iteration or area_max[1] >= label_voxel.shape[1]-iteration or area_max[2] >= label_voxel.shape[2]-iteration:
+            continue
+        niv = np.copy(iv[i,area_min[0]:area_max[0],area_min[1]:area_max[1],area_min[2]:area_max[2]])
+        for iter in range(iteration):
+            buf = np.zeros((area_max[0]-area_min[0], area_max[1]-area_min[1], area_max[2]-area_min[2]), np.int32)
+            for dz in range(-1, 2):
+                for dy in range(-1,2):
+                    for dx in range(-1,2):
+                        roll = np.roll(niv, (dz,dy,dx), axis=(0,1,2))
+                        buf =  buf | (roll!=0)
+            niv[buf!=0]+=1
+        iv[i,area_min[0]:area_max[0],area_min[1]:area_max[1],area_min[2]:area_max[2]] = niv
+    return iv
+
+def apply_label_to_edge(char_voxel, edge_voxel, label_voxel):
+    iteration = 7
+    # get distance map from each label areas
+    dist_inv = get_label_dist_voxel(label_voxel, iteration).transpose(1,2,3,0)
+    label_length = dist_inv.shape[3]
+    nonzero = np.nonzero(edge_voxel)
+    targets = np.array(nonzero).transpose()
+    dist_inv_voi = dist_inv[nonzero]
+    print("get bright normals")
+    bright_normal = np.tile(get_normals(char_voxel, targets), (label_length,1,1)).transpose(1,2,0)
+    print("get dist inverse normals")
+    distiv_normal = np.zeros(bright_normal.shape, np.float32)
+    for i in range(label_length):
+        print("dist normal step:{}".format(i))
+        n_distiv_normal = distiv_normal[:,:,i]
+        tgt = np.array(np.nonzero(label_voxel==i))
+        area_min = np.min(tgt, axis=1)
+        area_max = np.max(tgt, axis=1)
+        valid_tgt = (area_min[0] - iteration < targets[:,0]) & (area_min[1] - iteration < targets[:,1]) & (area_min[2]-iteration < targets[:,2]) & (area_max[0]+iteration > targets[:,0]) & (area_max[1]+iteration > targets[:,1]) & (area_max[2]+iteration > targets[:,2])
+        n_distiv_normal[valid_tgt] = get_normals(dist_inv[:,:,:,i], targets[valid_tgt])
+    #distiv_normal = get_labels_normals(dist_inv, targets)
+    print("get dot each normals")
+    dot = -np.sum(bright_normal*distiv_normal, axis = 1)
+    print("calc likelihood")
+    likely = dist_inv_voi * dot
+    surface_label_voxel = np.zeros(label_voxel.shape, dtype=np.uint32)
+    labels = np.argmax(likely, axis=1)
+    print("max: {}, ave: {} , std: {}".format(np.max(likely), np.mean(likely),np.std(likely)))
+    labels[np.max(likely, axis=1)<3] = 0
+    surface_label_voxel[nonzero] = labels
+    return surface_label_voxel
 
 def get_normals(char_voxel, targets):
     target_length = targets.shape[0]
@@ -79,6 +135,31 @@ def get_normals(char_voxel, targets):
     normals[:,1] = sobel[:,1]/length
     normals[:,2] = sobel[:,2]/length
     return normals
+
+def get_labels_normals(label_voxel, targets):
+    label_length = label_voxel.shape[3]
+    print(label_length)
+    target_length = targets.shape[0]
+    wei = [1,2,1,2,4,2,1,2,1]
+    p1 = [-1,0,1,-1,0,1,-1,0,1]
+    p2 = [-1,-1,-1,0,0,0,1,1,1]
+    sobel = np.zeros((3, target_length, label_length), np.float32)
+    tx = targets[:,0]
+    ty = targets[:,1]
+    tz = targets[:,2]
+
+    for i in range(9):
+        print(i)
+        sobel[0, :, :] += (label_voxel[tx+1, ty+p1[i], tz+p2[i], :] - label_voxel[tx-1, ty+p1[i], tz+p2[i], :]) * wei[i]
+        sobel[1, :, :] += (label_voxel[tx+p1[i], ty+1, tz+p2[i], :] - label_voxel[tx+p1[i], ty-1, tz+p2[i], :]) * wei[i]
+        sobel[2, :, :] += (label_voxel[tx+p2[i], ty+p1[i], tz+1, :] - label_voxel[tx+p2[i], ty+p1[i], tz-1, :]) * wei[i]
+    length = np.sqrt(sobel[0,:,:]*sobel[0,:,:] + sobel[1,:,:]*sobel[1,:,:] + sobel[2,:,:]*sobel[2,:,:])
+    length[length<=0.00001]=1.0
+    normals = np.zeros((3, target_length, label_length), np.float32)
+    normals[0,:,:] = sobel[0,:,:]/length
+    normals[1,:,:] = sobel[1,:,:]/length
+    normals[2,:,:] = sobel[2,:,:]/length
+    return normals.transpose(1,0,2)
 def get_normal(char_voxel, x,y,z):
     if x<2 or y<2 or z<2 or x > char_voxel.shape[0]-3 or y > char_voxel.shape[1]-3 or z > char_voxel.shape[2]-3:
         return np.array([0.5,0.5,0.5])
@@ -163,9 +244,11 @@ def labeling_bool(voxel):
     labels = np.full(voxel.shape, 0, dtype=np.int32)
     label_count = 1
     label_count_start = np.zeros(voxel.shape[0]+1, dtype=np.int32)
-    kernel = np.ones((5,5),np.uint8)
+    kernel = np.ones((3,3),np.uint8)
     for i in range(voxel.shape[0]):
         label_count_start[i] = label_count
+        #erosion = cv2.erode(voxel[i,:,:].astype(np.uint8),kernel,iterations = 2)
+        #opening = cv2.morphologyEx(erosion, cv2.MORPH_OPEN, kernel)
         opening = cv2.morphologyEx(voxel[i,:,:].astype(np.uint8), cv2.MORPH_OPEN, kernel)
         current_label_count, layer_label = cv2.connectedComponents(opening)
         lb = layer_label.astype(np.int32)
@@ -208,5 +291,7 @@ def labeling_bool(voxel):
     return labels
 # wrapper for code joint
 def labeling_module(char_voxel, edge_voxel, bool_voxel):
-    labeling_bool(bool_voxel)
+    label_voxel = labeling_bool(bool_voxel)
     #labeling(char_voxel, bool_voxel)
+    surface_label_voxel = apply_label_to_edge(char_voxel, edge_voxel, label_voxel)
+    return surface_label_voxel

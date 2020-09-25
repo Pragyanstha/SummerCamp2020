@@ -163,7 +163,7 @@ if __name__ == "__main__":
     #labels = labeling(char_voxel, bool_boxel)
     th_bool_voxel = create_th_voxel(char_voxel)
     th_bool_voxel = th_bool_voxel * (bool_voxel==False)
-    labels = labeling_bool(th_bool_voxel)
+    labels = labeling_module(char_voxel, bool_voxel, th_bool_voxel)#labeling_bool(th_bool_voxel)
     select_id_ = np.max(labels)
     set_voxels()
     main()

@@ -31,7 +31,7 @@ def create_downsampled_voxel_sample():
         img = cv2.imread(filename)
         img_resize = cv2.resize(img, (271, 275))#notice: (w,h), not(h,w)
         voxel[i,:,:] = img_resize[:,:,0]
-    np.save("downsampled_voxel_sample", voxel)
+    #np.save("downsampled_voxel_sample", voxel)
     return voxel
 
 def create_th_voxel(char_voxel):
