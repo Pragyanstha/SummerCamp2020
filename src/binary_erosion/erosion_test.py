@@ -34,10 +34,10 @@ def erode2(src, ksize=3):
 
     return dst
 
-test=np.array
+test=np.array(Image.open('aaa.jpg').convert('L'))
 #struct = ndimage.generate_binary_structure(3, 3)
 
-
+"""
 test=np.array([[[ 0, 1, 1, 1, 1, 1, 1, 1],
                 [ 1, 1, 1, 0, 0, 1, 1, 1],
                 [ 1, 1, 1, 0, 0, 1, 1, 1]],
@@ -53,7 +53,10 @@ test=np.array([[[ 0, 1, 1, 1, 1, 1, 1, 1],
                  [[1, 1, 1, 1, 1, 1, 1, 0],
                   [1, 1, 1, 1, 1, 1, 1, 1],
                   [1, 1, 1, 1, 1, 1, 1, 1]]])
+"""
 
+print(test)
+print("¥n")
 #test=np.vsplit(test)
 #print(test[0])
 #kernel = np.ones((3, 3), np.uint8)
@@ -64,17 +67,23 @@ Image.fromarray(erode(test[:,:],3)).show()
 """
 for num in range(test.shape[0]):
     print(num)
-    test[num,:,:]=erode(test[num,:,:],3)
+    test[num,:]=erode(test[num,:],3)
+"""
+
+test[:,:]=erode2(test[:,:],3)
     #morphology.binary_erosion(test[num], struct).astype(np.uint8)
 
-print(test)
+#print(test)
 
-for num in range(test.shape[1]):
-    print(num)
-    test[:,num,:]=erode2(test[:,num,:],3)
+#for num in range(test.shape[1]):
+#    print(num)
+#    test[:,num,:]=erode2(test[:,num,:],3)
     #morphology.binary_erosion(test[num], struct).astype(np.uint8)
+pil_img = Image.fromarray(test)
+print(pil_img.mode)
 
-print(test)
+pil_img.save('erosion2.jpg')
+#print(test)
 #a=np.linspace(1)
 #testout = reconstruction(test,a, method='erosion').astype(np.uint8)
 
