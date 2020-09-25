@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import random
 
-from union_find import UnionFind
+from labeling_cc.union_find import UnionFind
 
 def create_bool_voxel(char_voxel):
 
@@ -93,6 +93,12 @@ def get_normal(char_voxel, x,y,z):
 
 def labeling(char_voxel, bool_voxel):
     # labeling target is boundary voxels
+    bool_voxel[0,:,:]=False
+    bool_voxel[:,0,:]=False
+    bool_voxel[:,:,0]=False
+    bool_voxel[bool_voxel.shape[0]-1,:,:]=False
+    bool_voxel[:,bool_voxel.shape[1]-1,:]=False
+    bool_voxel[:,:,bool_voxel.shape[2]-1]=False
     nonzero = np.nonzero(bool_voxel)
     targets = np.array(nonzero).transpose()
     normals = get_normals(char_voxel, targets)

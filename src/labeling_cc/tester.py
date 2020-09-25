@@ -11,7 +11,7 @@ def create_voxel_sample():
         return voxel
     voxel = np.zeros((1441, 1091, 1086), dtype=np.uint8)
     for i in range(1,1441):
-        filename = "../../../summercamp_data/Problem01/Problem01_{:04}.bmp".format(i)
+        filename = "Problem01/Problem01_{:04}.bmp".format(i)
         if i % 10 == 0:
             print(filename)
         img = cv2.imread(filename)
@@ -25,7 +25,7 @@ def create_downsampled_voxel_sample():
         return voxel
     voxel = np.zeros((360, 275, 271), dtype=np.uint8)
     for i in range(1,360):
-        filename = "../../../summercamp_data/Problem01/Problem01_{:04}.bmp".format(i*4)
+        filename = "Problem01/Problem01_{:04}.bmp".format(i*4)
         if i % 10 == 0:
             print(filename)
         img = cv2.imread(filename)
