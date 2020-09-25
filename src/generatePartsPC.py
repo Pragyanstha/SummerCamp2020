@@ -18,6 +18,6 @@ for i in range(len(parts_str)):
     v = v == label
     pcs = pc_conversion(v)
     fname = './DenseParts/' + parts_str[i] + '.ply'
-    o3d.io.write_point_cloud(fname, pcs[0])
+    o3d.io.write_point_cloud(fname, pcs)
     #o3d.visualization.draw_geometries([pcs[0]]) # only one pc
 

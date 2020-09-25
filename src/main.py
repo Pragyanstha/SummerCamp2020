@@ -12,7 +12,7 @@ from utils.bmp2tensor import bmp2tensor
 from binary_erosion.erosion import erode
 from foreground_extraction.segment import segment2
 from edge_detection.edge_detection import edge_detection
-from labeling_cc.labeling import labeling_bool
+from labeling_cc.labeling import labeling_module
 from pc_conversion.pc_conversion import pc_conversion
 from icp_evaluator.matchingPointsCloudUseICP import matchingUseIcp
 
@@ -102,7 +102,7 @@ fname = getCachePath(4)
 if(path.exists(fname)):
     labeled = load(fname)
 else:
-    labeled = labeling_bool(pipeline2)
+    labeled = labeling_module(vol, pipeline1, pipeline2)
     save(fname, labeled)
 
 
