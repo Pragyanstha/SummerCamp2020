@@ -4,3 +4,8 @@ src/labeling_cc/__pycache__/*
 /Part*
 /Problem*
 /SourcePointClouds
+/Canny
+/Test
+
+
+*.jpg
