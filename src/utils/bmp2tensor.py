@@ -22,7 +22,7 @@ def bmp2tensor(problem_str, size):
     for item in fname.glob('*'):
         if count % skip == 0:
 
-            print (str(item), str(item.absolute()))
+            #print (str(item), str(item.absolute()))
             im = Image.open(item.absolute())
             im = im.resize((size[0], size[1]),Image.ANTIALIAS).convert('L')
             im2arr = np.array(im)

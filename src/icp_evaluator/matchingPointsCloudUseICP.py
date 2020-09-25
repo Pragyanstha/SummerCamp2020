@@ -22,7 +22,7 @@ def matchingUseIcp(source, target):
     intpu: source, target as points cloud
     return: rmse and transformation matrix(4x4)
     """
-    threshold = 1.0  # threshold
+    threshold = 100  # threshold
 
     trans_init = np.asarray([[1,0,0,0],   # 4x4 identity matrix，transform matrix
                              [0,1,0,0],   # inital the transform matrix

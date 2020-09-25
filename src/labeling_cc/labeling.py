@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import random
 
-from union_find import UnionFind
+from labeling_cc.union_find import UnionFind
 
 def create_bool_voxel(char_voxel):
 
