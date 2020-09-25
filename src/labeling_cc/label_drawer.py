@@ -62,7 +62,7 @@ def display():
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
     ##set camera
-    gluLookAt(-1.0, 0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0)
+    gluLookAt(-1.0, 0.0, 0., 0.0, 0.0, 0.0, 0.0, 0.0, 1.0)
     glMultMatrixd(sum(rotate_, []))
     glMultMatrixd([scale_, 0, 0, 0, 0, scale_, 0, 0, 0, 0, scale_, 0, 0, 0.0, 0, 1])
     glColor3f(1.0, 0.0, 0.0)
@@ -147,13 +147,14 @@ def set_voxels():
     target = np.array(np.nonzero(labels == select_id_)).transpose()
     vl = target.shape[0]
     vtx = target.astype(np.float32)
+    vtx[:,0] -= 180
+    vtx[:,1] -= 137.5
+    vtx[:,2] -= 135.5
+
     vcs = np.zeros((vl, 3), np.float32)
 
     normals = get_normals(char_voxel, target)
-    print(normals)
     vcs = normals*0.5+0.5
-    #for i in range(vl):
-    #    vcs[i,:] = get_normal(char_voxel,edges_sparce[i,0],edges_sparce[i,1],edges_sparce[i,2])
     print("voxel load finished. length: {}".format(vl))
 
 if __name__ == "__main__":
@@ -162,5 +163,6 @@ if __name__ == "__main__":
     #labels = labeling(char_voxel, bool_boxel)
     bool_voxel = create_th_voxel(char_voxel)
     labels = labeling_bool(bool_voxel)
+    select_id_ = np.max(labels)
     set_voxels()
     main()
