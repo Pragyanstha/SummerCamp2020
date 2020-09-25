@@ -4,3 +4,4 @@ src/labeling_cc/__pycache__/*
 /Part*
 /Problem*
 /SourcePointClouds
+*.jpg
