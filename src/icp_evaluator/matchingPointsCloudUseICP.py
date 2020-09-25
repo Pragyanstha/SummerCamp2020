@@ -26,23 +26,23 @@ def matchingUseIcp(source, target):
     target_array =  np.asarray(target.points).transpose()
 
     cov_s = np.cov(source_array)
-    print(cov_s.shape)
+    #print(cov_s.shape)
     r_s, _a, _b = np.linalg.svd(cov_s)
 
     cov_t = np.cov(target_array)
-    print(cov_t.shape)
+    #print(cov_t.shape)
     r_t, _c, _d = np.linalg.svd(cov_t)
 
     r_ = r_s.dot(r_t.transpose())
-    print(r_.shape)
+    #print(r_.shape)
 
     move_t = np.mean(target_array ,axis=1) - np.mean( source_array ,axis=1)
 
-    print("move_t:",move_t)
+    #print("move_t:",move_t)
 
     current_transformation = np.identity(4)
     
-    print("3. Colored point cloud registration")
+    #print("3. Colored point cloud registration")
 
     criteria = o3d.registration.ICPConvergenceCriteria( relative_fitness = 0.0005, #fitnessの変化分がこれより小さくなったら収束
                                                         relative_rmse = 0.0001,      #relative_rmseの変化分がこれより小さくなったら収束 
@@ -57,7 +57,7 @@ def matchingUseIcp(source, target):
     r_b[3,3] = 1
     target.transform(r_b)
 
-    print("r_b:",r_b)
+    #print("r_b:",r_b)
 
     for i in range(3):
 
@@ -67,7 +67,7 @@ def matchingUseIcp(source, target):
             o3d.geometry.KDTreeSearchParamHybrid(radius= 0.1, max_nn=30))
 
         move_t = np.mean(source_array ,axis=1) - np.mean( target_array ,axis=1)
-        print("move_t:",move_t)
+        #print("move_t:",move_t)
 
         result_icp = o3d.registration.registration_icp(
                                                        source, 
