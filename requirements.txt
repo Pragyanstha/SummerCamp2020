@@ -1,0 +1,7 @@
+open3d
+opencv-python
+matplotlib
+scipy
+PyOpenGL 
+PyOpenGL_accelerate
+pillow

@@ -1,8 +1,9 @@
 # coding: utf-8
 import numpy as np
 import cv2
+import random
 
-from union_find import UnionFind
+from labeling_cc.union_find import UnionFind
 
 def create_bool_voxel(char_voxel):
 
@@ -92,6 +93,12 @@ def get_normal(char_voxel, x,y,z):
 
 def labeling(char_voxel, bool_voxel):
     # labeling target is boundary voxels
+    bool_voxel[0,:,:]=False
+    bool_voxel[:,0,:]=False
+    bool_voxel[:,:,0]=False
+    bool_voxel[bool_voxel.shape[0]-1,:,:]=False
+    bool_voxel[:,bool_voxel.shape[1]-1,:]=False
+    bool_voxel[:,:,bool_voxel.shape[2]-1]=False
     nonzero = np.nonzero(bool_voxel)
     targets = np.array(nonzero).transpose()
     normals = get_normals(char_voxel, targets)
@@ -120,7 +127,6 @@ def labeling(char_voxel, bool_voxel):
         v2 = idx[1+p0[i]:1+p0[i]+ss[0], 1+p1[i]:1+p1[i]+ss[1], 1+p2[i]:1+p2[i]+ss[2]]
         do = np.sum(vnm[1:1+ss[0], 1:1+ss[1], 1:1+ss[2]] * vnm[1+p0[i]:1+p0[i]+ss[0], 1+p1[i]:1+p1[i]+ss[1], 1+p2[i]:1+p2[i]+ss[2]], 3)
         v3 = (do > 0.3)
-        con_voi = np.nonzero(v3)#np.nonzero(v1 * v2 * v3)
         con = np.nonzero(v1*v2*v3)
         conp = np.array(con)+1
         id1s = idx[tuple(conp.tolist())].tolist()
@@ -154,33 +160,49 @@ def labeling(char_voxel, bool_voxel):
     return labels
 # labeling from bool voxel
 def labeling_bool(voxel):
-    labels = np.full(voxel.shape, -1, dtype=np.int32)
+    labels = np.full(voxel.shape, 0, dtype=np.int32)
     label_count = 1
+    label_count_start = np.zeros(voxel.shape[0]+1, dtype=np.int32)
+    kernel = np.ones((5,5),np.uint8)
     for i in range(voxel.shape[0]):
-        if i % 10 == 0:
-            print("step: {}, count: {}".format(i, label_count))
-        current_label_count, lb = cv2.connectedComponents(voxel[i,:,:].astype(np.uint8))
-        lb[lb>0] += label_count
-        if i>2:
-            for j in range(label_count,label_count + current_label_count):
-                nc = lb[lb==j]
-                if np.count_nonzero(nc)< 10:
-                    lb[lb==j] = 0
-                    continue
-                lc = (lb==j) * labels[i-1,:,:]
-                if np.count_nonzero(lc) > 10:
-                    rel_label = lc[np.nonzero(lc)][0]
-                    lb[lb==j] = rel_label
-                    #lb[lb==label_count + current_label_count-1] = j
-                    #current_label_count -= 1
-        labels[i,:,:] = lb
+        label_count_start[i] = label_count
+        erosion1 = cv2.erode(voxel[i,:,:].astype(np.uint8),kernel,iterations = 1)
+        current_label_count, layer_label = cv2.connectedComponents(erosion1)
+        lb = layer_label.astype(np.int32)
+        lb[lb<0]=0
+        lb[np.nonzero(lb)] += label_count
+        labels[i,:,:] = np.copy(lb)
         label_count += current_label_count
-    new_label=1
-    for i in range(1,label_count):
-        if i % 10 == 0:
-            print("step: {}, count: {}".format(i, label_count))
-        if np.count_nonzero(labels==i) > 10:
-            labels[labels==i] = new_label
-            new_label+=1
-    print("valid label: {}".format(new_label))
+    label_count_start[voxel.shape[0]] = label_count
+
+    uf = UnionFind(label_count)
+    for i in range(voxel.shape[0]-1):
+        # put current and next layer labels
+        lbp = labels[i,:,:]
+        lbq = labels[i+1,:,:]
+        for l in range(label_count_start[i], label_count_start[i+1]):
+            lbp_match = (lbp==l)
+            uf.count[l] = np.count_nonzero(lbp_match)
+
+            # connected labels
+            duplicate = lbq[np.nonzero(lbp_match * lbq)]
+            label_connected = np.unique(duplicate)
+            for lc in label_connected:
+                if np.count_nonzero(duplicate == lc) > 10:
+                    uf.union(l,lc)
+    # labels lookup table
+    lut = np.zeros(label_count, dtype=np.int32)
+    lbl_max = 1
+    for i in range(label_count):
+        fi = uf.find(i)
+        if fi == i and uf.count[i]>100:
+            lut[i]=lbl_max
+            lbl_max += 1
+    print("label count: {}".format(lbl_max))
+
+    for i in range(voxel.shape[0]-1):
+        lb = labels[i,:,:]
+        for l in range(label_count_start[i], label_count_start[i+1]):
+            lb[lb==l] = lut[uf.find(l)]
+    print("finish labeling")
     return labels
