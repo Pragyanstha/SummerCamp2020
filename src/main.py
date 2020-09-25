@@ -21,6 +21,14 @@ def getCachePath(num_step):
 
 def getCCVPath(num):
     return cache_folder + PROBLEM_STR + '/Components/' + 'cc_'+ str(VOXEL_SIZE)+'_'+str(num)+'.ply'
+def smaller(bool_voxel):
+    bool_voxel[0,:,:]=False
+    bool_voxel[:,0,:]=False
+    bool_voxel[:,:,0]=False
+    bool_voxel[bool_voxel.shape[0]-1,:,:]=False
+    bool_voxel[:,bool_voxel.shape[1]-1,:]=False
+    bool_voxel[:,:,bool_voxel.shape[2]-1]=False
+
 
 if (len(sys.argv) != 3):
     print('Running with Probelm01 and size 200')
@@ -102,6 +110,7 @@ fname = getCachePath(4)
 if(path.exists(fname)):
     labeled = load(fname)
 else:
+    smaller(pipeline1)
     labeled = labeling_module(vol, pipeline1, pipeline2)
     save(fname, labeled)
 
