@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
               
 def segment(image, margin):
 
@@ -11,19 +12,11 @@ def segment(image, margin):
         
 def segment2(voxel):
 
-        for i in range(voxel.shape[0]):
-            label, bw = kmeans(vol[i,:,:])
-            vol[i,:,:] = bw
-        
-        return voxel
+    vectorized=voxel.reshape(-1,1)
+    vectorized=np.float32(vectorized)
+    criteria=(cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER,10, 1.0)
+    ret,label,center=cv2.kmeans(vectorized,3,None,criteria,10,cv2.KMEANS_PP_CENTERS)
+    print("Cluster centers : ")
+    print(center)    
+    return label.reshape(voxel.shape)
     
-def kmeans(image):
-
-       vectorized=image.reshape(-1,3)
-       vectorized=np.float32(vectorized)
-       criteria=(cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER,10, 1.0)
-       ret,label,center=cv2.kmeans(vectorized,2,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
-       res = center[label.flatten()]
-       segmented_image = res.reshape((image.shape))
-       return (label.reshape((image.shape[0],image.shape[1])),segmented_image.astype(np.uint8))
-              
