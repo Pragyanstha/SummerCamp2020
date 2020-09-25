@@ -12,7 +12,9 @@ voxels=np.array(bmp.bmp2tensor(1,[100,100,100])).astype(np.uint8)
 
 
 for num in range(voxels.shape[0]):
-    cv2.Canny(voxels[num,:,:],100,200)
+    voxels1=np.array(cv2.Canny(voxels[num,:,:],100,200))
 
 for num in range(voxels.shape[1]):
-    cv2.Canny(voxels[:,num,:],100,200)
+    voxels2=(cv2.Canny(voxels[:,num,:],100,200))
+
+np.array(voxels1|voxels2)
