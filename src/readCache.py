@@ -5,7 +5,6 @@ import sys
 import re
 import matplotlib.pyplot as plt
 
-point = re.compile('.ply')
 if (len(sys.argv) == 1):
     fname = 'Problem01/eroded_200.npy'
 else:
@@ -13,7 +12,7 @@ else:
     
 fname = './cache/' + fname
 
-if(point.match(fname)):
+if(fname.endswith('.ply')):
     pcd = o3d.io.read_point_cloud(fname)
     o3d.visualization.draw_geometries([pcd])
 
