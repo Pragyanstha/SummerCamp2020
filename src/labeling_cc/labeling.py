@@ -206,3 +206,7 @@ def labeling_bool(voxel):
             lb[lb==l] = lut[uf.find(l)]
     print("finish labeling")
     return labels
+# wrapper for code joint
+def labeling_module(char_voxel, bool_voxel):
+    labeling_bool(bool_voxel)
+    #labeling(char_voxel, bool_voxel)
