@@ -17,4 +17,4 @@ for num in range(voxels.shape[0]):
 for num in range(voxels.shape[1]):
     voxels2=(cv2.Canny(voxels[:,num,:],100,200))
 
-np.array(voxels1|voxels2)
+output=np.array(voxels1|voxels2)
