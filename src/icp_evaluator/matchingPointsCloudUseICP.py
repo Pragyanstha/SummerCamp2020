@@ -80,7 +80,7 @@ def matchingUseIcp(source, target):
         source.transform(result_icp.transformation)
         print("iteration {0:02d} fitness {1:.6f} RMSE {2:.6f}".format(i, result_icp.fitness, result_icp.inlier_rmse))
 
-        draw_registration_result(source, target, result_icp.transformation)
+        #draw_registration_result(source, target, result_icp.transformation)
 
     return result_icp.inlier_rmse, result_icp.transformation
 
